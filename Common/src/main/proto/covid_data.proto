@@ -9,12 +9,12 @@ message Bool {
   bool result = 1;
 }
 
-message CountryProto {
+message Country {
   string name = 1;
   string slug = 2;
   string code = 3;
 }
 
 service DatabasePopulateService {
-  rpc populateData (CountryProto) returns (Bool) {};
+  rpc populateData (Country) returns (Bool) {};
 }
