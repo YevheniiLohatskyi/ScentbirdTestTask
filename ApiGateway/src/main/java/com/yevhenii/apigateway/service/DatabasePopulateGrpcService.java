@@ -4,7 +4,6 @@ import com.yevhenii.apigateway.model.Country;
 import com.yevhenii.grpc.common.CountryProto;
 import com.yevhenii.grpc.common.DatabasePopulateServiceGrpc;
 import io.grpc.ManagedChannel;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service

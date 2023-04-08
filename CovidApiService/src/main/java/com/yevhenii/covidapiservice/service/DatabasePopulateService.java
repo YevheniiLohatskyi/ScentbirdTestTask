@@ -36,21 +36,24 @@ public class DatabasePopulateService extends DatabasePopulateServiceGrpc.Databas
     @PostConstruct
     @Transactional
     public void populateCountries() {
-        countryRepository.saveAllAndFlush(
-            Arrays.stream(Objects.requireNonNull(covidApiService.getAllCountries()))
-                .map(covidCountry ->
-                    new Country(covidCountry.getCountry(), covidCountry.getSlug(), covidCountry.getIso2()))
-                .toList()
-        );
+        if (countryRepository.findAll().isEmpty()) {
+            countryRepository.saveAll(
+                Arrays.stream(Objects.requireNonNull(covidApiService.getAllCountries()))
+                    .map(covidCountry ->
+                        new Country(covidCountry.getCountry(), covidCountry.getSlug(), covidCountry.getIso2()))
+                    .toList()
+            );
+        }
     }
 
     @Override
+    @Transactional
     public void populateData(com.yevhenii.grpc.common.Country request, StreamObserver<Bool> responseObserver) {
         Country country = countryRepository.getByCode(request.getCode());
         Map<LocalDate, Integer> allData =
             Arrays.stream(Objects.requireNonNull(covidApiService.getDataForCountry(country.getSlug())))
                 .collect(Collectors.toMap(c -> c.getDate().toLocalDate(), CovidDataDTO::getCases));
-        covidNewCasesRepository.saveAllAndFlush(calculateDailyNewCases(allData, country));
+        covidNewCasesRepository.saveAll(calculateDailyNewCases(allData, country));
 
         responseObserver.onNext(Bool.newBuilder().build());
         responseObserver.onCompleted();
@@ -83,9 +86,8 @@ public class DatabasePopulateService extends DatabasePopulateServiceGrpc.Databas
             .collect(Collectors.toMap(Country::getCode, Function.identity()));
         SummaryDTO summary = Objects.requireNonNull(covidApiService.getSummary());
 
-        covidNewCasesRepository.saveAllAndFlush(
-            summary.getCountries().stream()
-                .map(c -> new CovidNewCases(countriesByCode.get(c.getIso2()), summary.getDate(), c.getNewConfirmed()))
-                .toList());
+        covidNewCasesRepository.saveAll(summary.getCountries().stream()
+            .map(c -> new CovidNewCases(countriesByCode.get(c.getIso2()), summary.getDate(), c.getNewConfirmed()))
+            .toList());
     }
 }

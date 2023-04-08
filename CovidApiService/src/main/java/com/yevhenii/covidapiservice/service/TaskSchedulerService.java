@@ -13,7 +13,7 @@ public class TaskSchedulerService {
     }
 
     // runs every day at 6:00 am
-    @Scheduled(cron = "0 5 * * *")
+    @Scheduled(cron = "${daily-update-cron}")
     void populateDataForToday() {
         databasePopulateService.populateDataForToday();
     }

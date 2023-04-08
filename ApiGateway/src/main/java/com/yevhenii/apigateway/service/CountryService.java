@@ -6,6 +6,7 @@ import com.yevhenii.grpc.common.DatabasePopulateServiceGrpc;
 import io.grpc.ManagedChannel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CountryService {
@@ -16,6 +17,7 @@ public class CountryService {
         this.countryRepository = countryRepository;
     }
 
+    @Transactional(readOnly = true)
     public Country getCountryByName(String countryName) {
         return countryRepository.getByName(countryName);
     }

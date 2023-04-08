@@ -3,13 +3,15 @@ package com.yevhenii.covidapiservice.service;
 import com.yevhenii.covidapiservice.model.CountryDTO;
 import com.yevhenii.covidapiservice.model.CovidDataDTO;
 import com.yevhenii.covidapiservice.model.SummaryDTO;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
 public class CovidApiService {
 
-    private static final String BASE_URL = "https://api.covid19api.com";
+    @Value("${covidapi.base-url")
+    public static String BASE_URL;
     public static final String COUNTRY_DATA = "/total/dayone/country/%s/status/confirmed";
     public static final String COUNTRIES = "/countries";
     public static final String SUMMARY = "/summary";
