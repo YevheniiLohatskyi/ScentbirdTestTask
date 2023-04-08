@@ -7,7 +7,6 @@ import com.yevhenii.covidapiservice.model.SummaryDTO;
 import com.yevhenii.covidapiservice.repository.CountryRepository;
 import com.yevhenii.covidapiservice.repository.CovidNewCasesRepository;
 import com.yevhenii.grpc.common.Bool;
-import com.yevhenii.grpc.common.CountryProto;
 import com.yevhenii.grpc.common.DatabasePopulateServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.PostConstruct;
@@ -35,6 +34,7 @@ public class DatabasePopulateService extends DatabasePopulateServiceGrpc.Databas
     }
 
     @PostConstruct
+    @Transactional
     public void populateCountries() {
         countryRepository.saveAllAndFlush(
             Arrays.stream(Objects.requireNonNull(covidApiService.getAllCountries()))
@@ -45,7 +45,7 @@ public class DatabasePopulateService extends DatabasePopulateServiceGrpc.Databas
     }
 
     @Override
-    public void populateData(CountryProto request, StreamObserver<Bool> responseObserver) {
+    public void populateData(com.yevhenii.grpc.common.Country request, StreamObserver<Bool> responseObserver) {
         Country country = countryRepository.getByCode(request.getCode());
         Map<LocalDate, Integer> allData =
             Arrays.stream(Objects.requireNonNull(covidApiService.getDataForCountry(country.getSlug())))
