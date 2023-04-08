@@ -12,3 +12,5 @@ CREATE TABLE covid_new_cases (
     new_cases INTEGER NOT NULL,
     FOREIGN KEY (country_id) REFERENCES countries(id)
 );
+
+CREATE INDEX idx_covid_new_cases_date ON covid_new_cases (date);
