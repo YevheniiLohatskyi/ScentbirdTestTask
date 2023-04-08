@@ -1,9 +1,7 @@
 package com.yevhenii.apigateway.controller;
 
 import com.yevhenii.apigateway.model.CovidCountryStatistics;
-import com.yevhenii.apigateway.service.CountryService;
 import com.yevhenii.apigateway.service.CovidStatsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +29,7 @@ public class CovidController {
         @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
 
         Map<String, CovidCountryStatistics> statisticsByCountry =
-            covidStatsService.populateAndGetStatistics(countries, fromDate, toDate);
+            covidStatsService.getStatisticsByCountry(countries, fromDate, toDate);
 
         return new ResponseEntity<>(statisticsByCountry, HttpStatus.OK);
     }
