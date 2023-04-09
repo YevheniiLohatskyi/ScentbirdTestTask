@@ -38,7 +38,7 @@ public class DatabasePopulateService extends DatabasePopulateServiceGrpc.Databas
     public void populateCountries() {
         if (countryRepository.findAll().isEmpty()) {
             countryRepository.saveAll(
-                Arrays.stream(Objects.requireNonNull(covidApiService.getAllCountries()))
+                covidApiService.getAllCountries().stream()
                     .map(covidCountry ->
                         new Country(covidCountry.getCountry(), covidCountry.getSlug(), covidCountry.getIso2()))
                     .toList()
@@ -51,7 +51,7 @@ public class DatabasePopulateService extends DatabasePopulateServiceGrpc.Databas
     public void populateData(com.yevhenii.grpc.common.Country request, StreamObserver<Bool> responseObserver) {
         Country country = countryRepository.getByCode(request.getCode());
         Map<LocalDate, Integer> allData =
-            Arrays.stream(Objects.requireNonNull(covidApiService.getDataForCountry(country.getSlug())))
+            covidApiService.getDataForCountry(country.getSlug()).stream()
                 .collect(Collectors.toMap(c -> c.getDate().toLocalDate(), CovidDataDTO::getCases));
         covidNewCasesRepository.saveAll(calculateDailyNewCases(allData, country));
 
@@ -62,21 +62,10 @@ public class DatabasePopulateService extends DatabasePopulateServiceGrpc.Databas
     private List<CovidNewCases> calculateDailyNewCases(Map<LocalDate, Integer> totalCasesByDate, Country country) {
         return totalCasesByDate.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
-            .map(entry -> {
-                CovidNewCases covidNewCases = new CovidNewCases();
-                LocalDate date = entry.getKey();
-                int cases = entry.getValue();
-
-                if (totalCasesByDate.containsKey(date.minusDays(1))) {
-                    cases -= totalCasesByDate.get(date.minusDays(1));
-                }
-
-                covidNewCases.setDate(date);
-                covidNewCases.setCountry(country);
-                covidNewCases.setNewCases(cases);
-
-                return covidNewCases;
-            })
+            .map(entry -> totalCasesByDate.containsKey(entry.getKey().minusDays(1))
+                ? new CovidNewCases(country, entry.getKey(),
+                    entry.getValue() - totalCasesByDate.get(entry.getKey().minusDays(1)))
+                : new CovidNewCases(country, entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
     }
 

@@ -4,36 +4,45 @@ import com.yevhenii.covidapiservice.model.CountryDTO;
 import com.yevhenii.covidapiservice.model.CovidDataDTO;
 import com.yevhenii.covidapiservice.model.SummaryDTO;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class CovidApiService {
 
-    @Value("${covidapi.base-url")
+    @Value("${covidapi.base-url}")
     public static String BASE_URL;
-    public static final String COUNTRY_DATA = "/total/dayone/country/%s/status/confirmed";
-    public static final String COUNTRIES = "/countries";
-    public static final String SUMMARY = "/summary";
 
     private final RestTemplate restTemplate;
+    private final CircuitBreaker circuitBreaker;
 
-    public CovidApiService(RestTemplate restTemplate) {
+    public CovidApiService(RestTemplate restTemplate, CircuitBreakerFactory circuitBreakerFactory) {
         this.restTemplate = restTemplate;
+        this.circuitBreaker = circuitBreakerFactory.create("covid-api");
     }
 
-    public CountryDTO[] getAllCountries() {
-        String url = BASE_URL + COUNTRIES;
-        return restTemplate.getForObject(url, CountryDTO[].class);
+    public List<CountryDTO> getAllCountries() {
+        return Arrays.asList(circuitBreaker.run(
+            () -> restTemplate.getForObject(BASE_URL + "/countries", CountryDTO[].class),
+            throwable -> new CountryDTO[0]));
     }
 
-    public CovidDataDTO[] getDataForCountry(String countrySlug) {
-        String url = BASE_URL + String.format(COUNTRY_DATA, countrySlug);
-        return restTemplate.getForObject(url, CovidDataDTO[].class);
+    public List<CovidDataDTO> getDataForCountry(String countrySlug) {
+        return Arrays.asList(circuitBreaker.run(
+            () -> restTemplate.getForObject(
+                BASE_URL + String.format("/total/dayone/country/%s/status/confirmed", countrySlug),
+                CovidDataDTO[].class),
+            throwable -> new CovidDataDTO[0]));
     }
 
     public SummaryDTO getSummary() {
-        String url = BASE_URL + SUMMARY;
-        return restTemplate.getForObject(url, SummaryDTO.class);
+        return circuitBreaker.run(
+            () -> restTemplate.getForObject(BASE_URL + "/summary", SummaryDTO.class),
+            throwable -> new SummaryDTO());
     }
 }
